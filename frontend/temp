@@ -1,0 +1,48 @@
+const carbonMarketplaceAddress = '0xYourCarbonMarketplaceAddress'; // Replace with the actual address of the CarbonMarketplace contract
+let carbonMarketplaceContract;
+
+// Function to initialize contracts
+async function initContracts() {
+    try {
+        const response = await fetch('assets/TokenABI.json');
+        const data = await response.json(); // Fetch and parse the ABI JSON
+        const abi = data.abi || data; // Access the abi property or use data directly
+
+        // Initialize the CarbonMarketplace contract
+        carbonMarketplaceContract = new web3.eth.Contract(abi, carbonMarketplaceAddress);
+        console.log('CarbonMarketplace contract initialized successfully');
+    } catch (error) {
+        console.error('Error initializing contract:', error);
+    }
+}
+
+// Update the purchaseTokens function to use the CarbonMarketplace contract
+async function purchaseTokens() {
+    if (!web3 || !carbonMarketplaceContract) {
+        alert('Please connect to MetaMask first!');
+        return;
+    }
+    
+    const amountToPurchase = 1; // Define how many credits to purchase (this can be dynamic)
+    const pricePerCredit = 1; // Price per credit in ETH (1 ether as defined in the contract)
+    const totalCost = web3.utils.toWei((amountToPurchase * pricePerCredit).toString(), 'ether'); // Convert to wei
+
+    try {
+        const accounts = await web3.eth.getAccounts();
+        if (!accounts || accounts.length === 0) {
+            alert('No accounts found. Please connect to MetaMask first.');
+            return;
+        }
+
+        // Call the buyCredits function from the CarbonMarketplace contract
+        const response = await carbonMarketplaceContract.methods.buyCredits(amountToPurchase).send({
+            from: accounts[0],
+            value: totalCost
+        });
+        console.log('Purchase successful:', response);
+        alert('Credits purchased successfully!');
+    } catch (error) {
+        console.error('Error purchasing credits:', error);
+        alert('Failed to purchase credits. Please try again.');
+    }
+}
